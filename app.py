@@ -34,7 +34,10 @@ oauth.register(
 db.init_app(app)
 
 with app.app_context():
-    db.create_all()
+    try:
+        db.create_all()
+    except Exception as e:
+        print(f"DB init warning: {e}")
 
 # --- Auth Routes ---
 @app.route('/create-order', methods=['POST'])
