@@ -34,7 +34,21 @@ with app.app_context():
     except Exception as e:
         print(f"DB init warning: {e}")
 
-# --- Auth Routes ---
+# Temporary debug route - remove after fixing
+@app.route('/debug')
+def debug():
+    db_uri = os.environ.get('DATABASE_URI', 'NOT SET')
+    masked = db_uri[:30] + '...' if len(db_uri) > 30 else db_uri
+    try:
+        from sqlalchemy import text
+        with db.engine.connect() as conn:
+            conn.execute(text('SELECT 1'))
+        db_status = 'Connected OK'
+    except Exception as e:
+        db_status = f'Error: {str(e)}'
+    return jsonify({'db_uri_preview': masked, 'db_status': db_status})
+
+
 @app.route('/create-order', methods=['POST'])
 def create_order():
     if 'user_id' not in session:
