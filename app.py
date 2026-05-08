@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, session, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Task
+from authlib.integrations.flask_client import OAuth
 import razorpay
 
 import os
@@ -18,6 +19,17 @@ app.secret_key = SECRET_KEY
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 client = razorpay.Client(auth=(RAZORPAY_KEY, RAZORPAY_SECRET))
+
+oauth = OAuth(app)
+oauth.register(
+    name='google',
+    client_id=os.environ.get('GOOGLE_CLIENT_ID'),
+    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
 
 db.init_app(app)
 
@@ -89,6 +101,29 @@ def logout():
     return redirect('/login')
 
 # --- Task Routes ---
+@app.route('/google/')
+def google():
+    from flask import url_for
+    redirect_uri = url_for('google_auth', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+@app.route('/google/auth/')
+def google_auth():
+    token = oauth.google.authorize_access_token()
+    google_user = token.get('userinfo')
+    
+    email = google_user.get('email')
+    
+    user = User.query.filter_by(username=email).first()
+    if not user:
+        user = User(username=email, password_hash=generate_password_hash("google_auth_placeholder"))
+        db.session.add(user)
+        db.session.commit()
+        
+    session['user_id'] = user.id
+    session['username'] = user.username
+    flash(f'Logged in as {user.username}', 'success')
+    return redirect('/')
 
 @app.route('/')
 def index():
