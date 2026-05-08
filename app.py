@@ -85,14 +85,18 @@ def upgrade_success():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
+        email = request.form.get('email')
         username = request.form.get('username')
         password = request.form.get('password')
         
+        if User.query.filter_by(email=email).first():
+            flash('Email already registered', 'danger')
+            return redirect('/signup')
         if User.query.filter_by(username=username).first():
-            flash('Username already exists', 'danger')
+            flash('Username already taken', 'danger')
             return redirect('/signup')
             
-        new_user = User(username=username, password_hash=generate_password_hash(password))
+        new_user = User(username=username, email=email, password_hash=generate_password_hash(password))
         db.session.add(new_user)
         db.session.commit()
         flash('Account created! Please login.', 'success')
@@ -102,16 +106,16 @@ def signup():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
+        email = request.form.get('email')
         password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter_by(email=email).first()
         
         if user and check_password_hash(user.password_hash, password):
             session['user_id'] = user.id
             session['username'] = user.username
             flash(f'Welcome back, {user.username}!', 'success')
             return redirect('/')
-        flash('Invalid credentials', 'danger')
+        flash('Invalid email or password', 'danger')
     return render_template('login.html')
 
 @app.route('/logout')
