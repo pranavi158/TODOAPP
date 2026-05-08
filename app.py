@@ -3,11 +3,21 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Task
 import razorpay
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SECRET_KEY = os.environ.get('SECRET_KEY', 'your_fallback_secret_key')
+DATABASE_URI = os.environ.get('DATABASE_URI', 'sqlite:///database.sqlite')
+RAZORPAY_KEY = os.environ.get('RAZORPAY_KEY')
+RAZORPAY_SECRET = os.environ.get('RAZORPAY_SECRET')
+
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sqlite'
+app.secret_key = SECRET_KEY
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-client = razorpay.Client(auth=("rzp_test_SmqgOM8GuIOeyQ", "o4EwcjwSUCePYqmIblQuHXHC"))
+client = razorpay.Client(auth=(RAZORPAY_KEY, RAZORPAY_SECRET))
 
 db.init_app(app)
 
@@ -25,7 +35,7 @@ def create_order():
     
     return jsonify({
         'order_id': order['id'], 
-        'key_id': "rzp_test_SmqgOM8GuIOeyQ",
+        'key_id': RAZORPAY_KEY,
         'amount': data['amount'],
         'currency': data['currency']
     })
