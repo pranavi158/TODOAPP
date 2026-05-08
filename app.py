@@ -18,10 +18,17 @@ app = Flask(__name__)
 app.secret_key = SECRET_KEY
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    "connect_args": {"sslmode": "require"}
-}
-client = razorpay.Client(auth=(RAZORPAY_KEY, RAZORPAY_SECRET))
+
+# Only apply SSL options for PostgreSQL (not SQLite)
+if DATABASE_URI.startswith('postgresql'):
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        "connect_args": {"sslmode": "require"}
+    }
+
+try:
+    client = razorpay.Client(auth=(RAZORPAY_KEY, RAZORPAY_SECRET))
+except Exception:
+    client = None
 
 oauth = OAuth(app)
 
