@@ -4,8 +4,8 @@ db = SQLAlchemy()
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    username = db.Column(db.String(150), unique=True, nullable=False)
+    password_hash = db.Column(db.Text, nullable=False)
     role = db.Column(db.String(20), default='Member')
     tasks = db.relationship('Task', backref='owner', lazy=True)
 
