@@ -18,6 +18,9 @@ app = Flask(__name__)
 app.secret_key = SECRET_KEY
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    "connect_args": {"sslmode": "require"}
+}
 client = razorpay.Client(auth=(RAZORPAY_KEY, RAZORPAY_SECRET))
 
 oauth = OAuth(app)
